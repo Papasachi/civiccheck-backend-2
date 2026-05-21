@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1242 2688" width="1242" height="2688">
+  <defs>
+    <linearGradient id="bgMain" x1="0%" y1="0%" x2="20%" y2="100%">
+      <stop offset="0%" style="stop-color:#1B3A6B"/>
+      <stop offset="60%" style="stop-color:#0F2548"/>
+      <stop offset="100%" style="stop-color:#091830"/>
+    </linearGradient>
+    <linearGradient id="goldG" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F0C040"/>
+      <stop offset="100%" style="stop-color:#C8962A"/>
+    </linearGradient>
+    <linearGradient id="glowGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F0C040" stop-opacity="0.15"/>
+      <stop offset="100%" style="stop-color:#F0C040" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="pinShadow">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+    <filter id="glowFilter">
+      <feGaussianBlur stdDeviation="40" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1242" height="2688" fill="url(#bgMain)"/>
+
+  <!-- Radial glow behind icon -->
+  <ellipse cx="621" cy="1150" rx="500" ry="500" fill="url(#glowGold)" filter="url(#glowFilter)"/>
+
+  <!-- Subtle horizontal lines (civic grid) -->
+  <line x1="0" y1="896" x2="1242" y2="896" stroke="#FFFFFF" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="0" y1="1344" x2="1242" y2="1344" stroke="#FFFFFF" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="414" y1="0" x2="414" y2="2688" stroke="#FFFFFF" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="828" y1="0" x2="828" y2="2688" stroke="#FFFFFF" stroke-opacity="0.03" stroke-width="1"/>
+
+  <!-- MAP PIN — large, centered at ~1050 -->
+  <path d="M621 820 C521 820 440 901 440 1000 C440 1095 530 1195 621 1320 C712 1195 802 1095 802 1000 C802 901 721 820 621 820 Z"
+        fill="url(#goldG)" filter="url(#pinShadow)"/>
+  <!-- Pin inner circle -->
+  <circle cx="621" cy="992" r="90" fill="#1B3A6B"/>
+  <!-- Pin inner dot -->
+  <circle cx="621" cy="992" r="36" fill="url(#goldG)"/>
+
+  <!-- SCALES on pin -->
+  <!-- Horizontal beam -->
+  <rect x="499" y="980" width="244" height="24" rx="12" fill="#FFFFFF" opacity="0.95"/>
+  <!-- Vertical pillar -->
+  <rect x="609" y="956" width="24" height="96" rx="10" fill="#FFFFFF" opacity="0.95"/>
+
+  <!-- Left pan strings -->
+  <line x1="528" y1="992" x2="504" y2="1048" stroke="#FFFFFF" stroke-width="8" stroke-opacity="0.9" stroke-linecap="round"/>
+  <!-- Left pan arc -->
+  <path d="M476 1048 Q504 1072 532 1048" stroke="#FFFFFF" stroke-width="8" fill="none" stroke-opacity="0.9" stroke-linecap="round"/>
+
+  <!-- Right pan strings -->
+  <line x1="714" y1="992" x2="738" y2="1048" stroke="#FFFFFF" stroke-width="8" stroke-opacity="0.9" stroke-linecap="round"/>
+  <!-- Right pan arc -->
+  <path d="M710 1048 Q738 1072 766 1048" stroke="#FFFFFF" stroke-width="8" fill="none" stroke-opacity="0.9" stroke-linecap="round"/>
+
+  <!-- WORDMARK -->
+  <text x="621" y="1460" font-family="Georgia, serif" font-size="130" font-weight="700"
+        fill="#FFFFFF" text-anchor="middle" letter-spacing="12">CIVIC</text>
+  <text x="621" y="1590" font-family="Georgia, serif" font-size="130" font-weight="700"
+        fill="url(#goldG)" text-anchor="middle" letter-spacing="12">CHECK</text>
+
+  <!-- Tagline -->
+  <text x="621" y="1680" font-family="Arial, sans-serif" font-size="52" font-weight="400"
+        fill="#FFFFFF" text-anchor="middle" opacity="0.6" letter-spacing="4">YOUR RIGHTS. YOUR CITY.</text>
+
+  <!-- Gold rule -->
+  <rect x="421" y="1710" width="400" height="4" rx="2" fill="url(#goldG)" opacity="0.5"/>
+
+  <!-- Bottom version / loading indicator placeholder -->
+  <circle cx="621" cy="2440" r="8" fill="#FFFFFF" opacity="0.2"/>
+  <circle cx="649" cy="2440" r="8" fill="url(#goldG)" opacity="0.6"/>
+  <circle cx="677" cy="2440" r="8" fill="#FFFFFF" opacity="0.2"/>
+</svg>

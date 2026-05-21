@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Reports ──────────────────────────────────────────────────────────────
+    // Anyone can read reports (public civic data).
+    // Only authenticated users can create.
+    // Only the submitter can update or delete their own report.
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasAll(['title', 'description', 'submittedBy'])
+                    && request.resource.data.submittedBy == request.auth.uid;
+      allow update, delete: if request.auth != null
+                             && resource.data.submittedBy == request.auth.uid;
+    }
+
+    // ── Vault files ───────────────────────────────────────────────────────────
+    // Users can only read and write their own vault files.
+    match /vault_files/{fileId} {
+      allow read: if request.auth != null
+                  && resource.data.uploadedBy == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.uploadedBy == request.auth.uid;
+      allow delete: if request.auth != null
+                    && resource.data.uploadedBy == request.auth.uid;
+      // Files are immutable once uploaded (no update)
+      allow update: if false;
+    }
+
+    // ── Map locations ─────────────────────────────────────────────────────────
+    // Anyone can read map markers (public civic map).
+    // Authenticated users can create markers.
+    // Only the creator can update status or delete.
+    match /map_locations/{locationId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasAll(['name', 'latitude', 'longitude'])
+                    && request.resource.data.createdBy == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.createdBy == request.auth.uid
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['createdBy', 'createdAt']);
+      allow delete: if request.auth != null
+                    && resource.data.createdBy == request.auth.uid;
+    }
+
+    // ── Default: deny everything else ─────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

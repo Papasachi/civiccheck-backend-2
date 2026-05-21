@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1B3A6B"/>
+      <stop offset="100%" style="stop-color:#0F2548"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F0C040"/>
+      <stop offset="100%" style="stop-color:#C8962A"/>
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="400" height="400" rx="72" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid lines (civic/map feel) -->
+  <line x1="0" y1="200" x2="400" y2="200" stroke="#FFFFFF" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="200" y1="0" x2="200" y2="400" stroke="#FFFFFF" stroke-opacity="0.04" stroke-width="1"/>
+
+  <!-- MAP PIN — centered, dominant -->
+  <!-- Pin body -->
+  <path d="M200 95 C164 95 135 124 135 160 C135 195 165 228 200 268 C235 228 265 195 265 160 C265 124 236 95 200 95 Z"
+        fill="url(#goldGrad)" filter="url(#softShadow)"/>
+  <!-- Pin inner circle -->
+  <circle cx="200" cy="158" r="24" fill="#1B3A6B"/>
+  <!-- Pin inner dot -->
+  <circle cx="200" cy="158" r="10" fill="url(#goldGrad)"/>
+
+  <!-- SCALES OF JUSTICE — overlaid on pin, centered -->
+  <!-- Central beam (horizontal) -->
+  <rect x="158" y="154" width="84" height="7" rx="3.5" fill="#FFFFFF" opacity="0.95"/>
+  <!-- Central pillar (vertical) -->
+  <rect x="196" y="147" width="8" height="32" rx="3" fill="#FFFFFF" opacity="0.95"/>
+
+  <!-- Left pan string -->
+  <line x1="168" y1="157" x2="162" y2="175" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="0.9" stroke-linecap="round"/>
+  <!-- Left pan -->
+  <path d="M153 175 Q162 182 171 175" stroke="#FFFFFF" stroke-width="2.5" fill="none" stroke-opacity="0.9" stroke-linecap="round"/>
+
+  <!-- Right pan string -->
+  <line x1="232" y1="157" x2="238" y2="175" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="0.9" stroke-linecap="round"/>
+  <!-- Right pan -->
+  <path d="M229 175 Q238 182 247 175" stroke="#FFFFFF" stroke-width="2.5" fill="none" stroke-opacity="0.9" stroke-linecap="round"/>
+
+  <!-- WORDMARK -->
+  <text x="200" y="318" font-family="Georgia, serif" font-size="38" font-weight="700"
+        fill="#FFFFFF" text-anchor="middle" letter-spacing="3">CIVIC</text>
+  <text x="200" y="354" font-family="Georgia, serif" font-size="38" font-weight="700"
+        fill="url(#goldGrad)" text-anchor="middle" letter-spacing="3">CHECK</text>
+
+  <!-- Gold underline accent -->
+  <rect x="130" y="362" width="140" height="3" rx="1.5" fill="url(#goldGrad)" opacity="0.7"/>
+</svg>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Privacy Policy — CivicCheck</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+       background:#f8f9fb;color:#1a1a2e;line-height:1.7}
+  header{background:#1B3A6B;padding:2rem 1.5rem;text-align:center}
+  header h1{color:#fff;font-size:1.6rem;font-weight:700;letter-spacing:.04em}
+  header p{color:#F0C040;font-size:.9rem;margin-top:.4rem;letter-spacing:.06em}
+  .container{max-width:760px;margin:0 auto;padding:2.5rem 1.5rem 4rem}
+  .card{background:#fff;border-radius:12px;padding:2rem;margin-bottom:1.5rem;
+        border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  h2{color:#1B3A6B;font-size:1.1rem;font-weight:700;margin-bottom:.9rem;
+     padding-bottom:.5rem;border-bottom:2px solid #F0C040;display:inline-block}
+  h3{color:#0F2548;font-size:.95rem;font-weight:600;margin:1rem 0 .4rem}
+  p,li{font-size:.92rem;color:#374151;margin-bottom:.6rem}
+  ul{padding-left:1.4rem;margin-bottom:.8rem}
+  li{margin-bottom:.35rem}
+  a{color:#1B3A6B;text-decoration:underline}
+  .badge{display:inline-block;background:#EBF2FA;color:#1B3A6B;
+         font-size:.75rem;padding:.25rem .65rem;border-radius:99px;
+         font-weight:600;margin-right:.4rem;margin-bottom:.4rem}
+  .highlight{background:#FFF8E6;border-left:4px solid #F0C040;
+              padding:.8rem 1rem;border-radius:0 8px 8px 0;margin:.8rem 0;
+              font-size:.88rem;color:#374151}
+  footer{text-align:center;padding:2rem 1rem;color:#94a3b8;font-size:.8rem}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CivicCheck</h1>
+  <p>PRIVACY POLICY</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Overview</h2>
+    <p><strong>Effective date: May 2026</strong></p>
+    <p>CivicCheck ("we", "our", or "us") is committed to protecting your privacy. This policy explains what data we collect, why we collect it, how we use it, and your rights regarding your information.</p>
+    <p>CivicCheck is a civic reporting platform that allows users to document, track, and report local civic issues including housing conditions, infrastructure problems, and community concerns.</p>
+    <div class="highlight">
+      We do not sell your personal data. We do not run ads. Your information is used solely to provide the CivicCheck service.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Information We Collect</h2>
+
+    <h3>Account information</h3>
+    <p>When you create an account we collect:</p>
+    <ul>
+      <li>Email address</li>
+      <li>Display name (if provided via Google or Apple sign-in)</li>
+      <li>Profile photo (if provided by your sign-in provider)</li>
+      <li>Authentication tokens (managed securely by Firebase Auth)</li>
+    </ul>
+
+    <h3>Content you create</h3>
+    <ul>
+      <li><strong>Reports</strong> — title, description, category, and location of civic issues you submit</li>
+      <li><strong>Vault files</strong> — photos, PDFs, and videos you upload as evidence (stored in your private vault)</li>
+      <li><strong>Map pins</strong> — location coordinates and descriptions of issues you mark on the map</li>
+    </ul>
+
+    <h3>Device and usage data</h3>
+    <ul>
+      <li>Device type and operating system (for app compatibility)</li>
+      <li>App version</li>
+      <li>Crash reports (to fix bugs)</li>
+      <li>General usage patterns (which screens you use — no keystroke or content logging)</li>
+    </ul>
+
+    <h3>Location data</h3>
+    <p>We access your device location only when you explicitly use map features to pin a civic issue. We do not track your location in the background.</p>
+  </div>
+
+  <div class="card">
+    <h2>How We Use Your Information</h2>
+    <ul>
+      <li>To provide, operate, and improve the CivicCheck app</li>
+      <li>To authenticate your account securely</li>
+      <li>To store and retrieve your reports, vault files, and map markers</li>
+      <li>To send you service-related notifications (only with your permission)</li>
+      <li>To diagnose technical issues and fix bugs</li>
+      <li>To comply with legal obligations</li>
+    </ul>
+    <p>We do <strong>not</strong> use your data for advertising, profiling, or sale to third parties.</p>
+  </div>
+
+  <div class="card">
+    <h2>Data Storage &amp; Security</h2>
+    <p>Your data is stored using Google Firebase, which provides:</p>
+    <ul>
+      <li>Encryption in transit (TLS/HTTPS on all connections)</li>
+      <li>Encryption at rest (Google Cloud infrastructure)</li>
+      <li>Per-user data isolation — you can only access your own vault files and reports</li>
+      <li>Firebase Authentication — we never store your password directly</li>
+    </ul>
+    <p>Our backend API runs on Railway with rate limiting, security headers, and token verification on every protected request.</p>
+    <div class="highlight">
+      Your vault files are private by default. Only you can access them. Reports and map pins you submit may be visible to other users as part of the civic reporting feature.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Third-Party Services</h2>
+    <p>CivicCheck uses the following third-party services:</p>
+    <span class="badge">Google Firebase</span>
+    <span class="badge">Railway (hosting)</span>
+    <span class="badge">Google Maps SDK</span>
+    <span class="badge">Apple Sign-In</span>
+    <span class="badge">Google Sign-In</span>
+    <p style="margin-top:.8rem">Each service has its own privacy policy. We encourage you to review them:</p>
+    <ul>
+      <li><a href="https://firebase.google.com/support/privacy" target="_blank">Firebase Privacy Policy</a></li>
+      <li><a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
+      <li><a href="https://www.apple.com/legal/privacy/" target="_blank">Apple Privacy Policy</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Your Rights</h2>
+    <p>You have the right to:</p>
+    <ul>
+      <li><strong>Access</strong> — request a copy of the data we hold about you</li>
+      <li><strong>Correction</strong> — update incorrect information in your account</li>
+      <li><strong>Deletion</strong> — request deletion of your account and all associated data</li>
+      <li><strong>Portability</strong> — export your reports and vault files</li>
+      <li><strong>Opt out</strong> — disable notifications at any time in app settings</li>
+    </ul>
+    <p>To exercise any of these rights, contact us at the email below. We will respond within 30 days.</p>
+  </div>
+
+  <div class="card">
+    <h2>Children's Privacy</h2>
+    <p>CivicCheck is not directed at children under the age of 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal information, please contact us and we will delete it promptly.</p>
+  </div>
+
+  <div class="card">
+    <h2>Data Retention</h2>
+    <ul>
+      <li>Account data is retained while your account is active</li>
+      <li>Vault files are retained until you delete them or close your account</li>
+      <li>Reports and map pins may be retained in anonymised form for civic data purposes after account deletion</li>
+      <li>Crash logs are retained for 90 days</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Changes to This Policy</h2>
+    <p>We may update this privacy policy from time to time. When we make significant changes, we will notify you through the app or by email. The date at the top of this page reflects the most recent update.</p>
+  </div>
+
+  <div class="card">
+    <h2>Contact Us</h2>
+    <p>If you have questions about this privacy policy or your data, please contact:</p>
+    <p><strong>CivicCheck</strong><br/>
+    Email: <a href="mailto:privacy@civiccheck.app">privacy@civiccheck.app</a><br/>
+    Website: <a href="https://civiccheck.app">civiccheck.app</a></p>
+  </div>
+
+</div>
+
+<footer>
+  &copy; 2026 CivicCheck. All rights reserved.<br/>
+  <a href="mailto:privacy@civiccheck.app" style="color:#94a3b8">privacy@civiccheck.app</a>
+</footer>
+
+</body>
+</html>

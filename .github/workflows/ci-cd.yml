@@ -1,0 +1,152 @@
+name: CivicCheck CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Job 1: Run offline route tests ──────────────────────────────────────────
+  test:
+    name: Route Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start stub server and run route tests
+        run: |
+          # Start the offline stub server in background
+          PORT=4099 node stub-server.js &
+          SERVER_PID=$!
+          sleep 1.5
+
+          # Run tests via Python (zero extra dependencies)
+          python3 << 'PYEOF'
+          import socket, subprocess, time, sys, json
+
+          PORT = 4099
+
+          def raw(method, path, headers={}, body=None):
+              s = socket.socket(); s.settimeout(5)
+              s.connect(('127.0.0.1', PORT))
+              hdrs = {'Host': f'localhost:{PORT}', 'Connection': 'close', **headers}
+              body_bytes = body.encode() if body else b''
+              if body_bytes:
+                  hdrs['Content-Type'] = 'application/json'
+                  hdrs['Content-Length'] = str(len(body_bytes))
+              req = '\r\n'.join([f'{method} {path} HTTP/1.1'] +
+                                [f'{k}: {v}' for k,v in hdrs.items()] + ['','']).encode() + body_bytes
+              s.sendall(req)
+              buf = b''
+              while True:
+                  try:
+                      c = s.recv(65536)
+                      if not c: break
+                      buf += c
+                  except: break
+              s.close()
+              text = buf.decode(errors='replace')
+              status = int(text.split('\r\n')[0].split()[1])
+              _, _, body_part = text.partition('\r\n\r\n')
+              try: return status, json.loads(body_part.strip())
+              except: return status, body_part
+
+          def has(d, k): return k in json.dumps(d, default=str)
+          TOKEN = 'Bearer ci-test-token'
+          P = 0; F = 0
+
+          def chk(label, ok, actual=''):
+              global P, F
+              if ok: print(f'  ✅  {label}'); P += 1
+              else:  print(f'  ❌  {label} — got: {str(actual)[:120]}'); F += 1
+
+          c, d = raw('GET', '/health')
+          chk('/health → 200', c == 200, d)
+          chk('/health → ok', has(d,'ok'), d)
+
+          c, d = raw('GET', '/home/status')
+          chk('/home/status → 200', c == 200, d)
+          chk('/home/status → totalReports', has(d,'totalReports'), d)
+
+          c, d = raw('GET', '/tracker/data', {'Authorization': TOKEN})
+          chk('/tracker/data → 200', c == 200, d)
+          chk('/tracker/data → chartData', has(d,'chartData'), d)
+          chk('/tracker/data → 7 buckets', isinstance(d,dict) and len(d.get('chartData',[])) == 7, d)
+
+          c, d = raw('GET', '/tracker/data')
+          chk('/tracker/data no auth → 401', c == 401, d)
+
+          c, d = raw('POST', '/tracker/report', {'Authorization': TOKEN},
+                     json.dumps({'title':'CI test report','description':'Automated test'}))
+          chk('/tracker/report → 201', c == 201, d)
+
+          c, d = raw('GET', '/vault/files', {'Authorization': TOKEN})
+          chk('/vault/files → 200', c == 200, d)
+
+          c, d = raw('GET', '/map/locations')
+          chk('/map/locations → 200', c == 200, d)
+          chk('/map/locations → seeded', isinstance(d,list) and len(d) >= 3, d)
+
+          c, d = raw('POST', '/map/locations', {'Authorization': TOKEN},
+                     json.dumps({'name':'CI Pin','latitude':40.71,'longitude':-74.01}))
+          chk('/map/locations POST → 201', c == 201, d)
+
+          c, d = raw('GET', '/nonexistent')
+          chk('unknown route → 404', c == 404, d)
+
+          print(f'\nResults: {P} passed | {F} failed')
+          sys.exit(0 if F == 0 else 1)
+          PYEOF
+
+          # Clean up
+          kill $SERVER_PID 2>/dev/null
+
+  # ── Job 2: Deploy to Railway (only on push to main) ─────────────────────────
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    needs: test          # only deploy if tests pass
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service civiccheck-api --detach
+
+      - name: Verify deployment health
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          echo "Waiting for deployment to settle..."
+          sleep 15
+          # Fetch the live URL from Railway and hit /health
+          LIVE_URL=$(railway domain --service civiccheck-api 2>/dev/null || echo "")
+          if [ -n "$LIVE_URL" ]; then
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$LIVE_URL/health")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Live health check passed (https://$LIVE_URL/health)"
+            else
+              echo "⚠️  Health check returned $STATUS — check Railway logs"
+            fi
+          else
+            echo "ℹ️  Could not fetch domain automatically — check Railway dashboard"
+          fi

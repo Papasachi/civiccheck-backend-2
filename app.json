@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "CivicCheck",
+    "slug": "civiccheck",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F2548"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.civiccheck.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1B3A6B"
+      },
+      "package": "com.civiccheck.app",
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "privacyPolicyUrl": "https://victorofori.github.io/civiccheck/privacy-policy"
+    },
+    "plugins": [],
+    "scheme": "civiccheck"
+  }
+}

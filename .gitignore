@@ -1,0 +1,23 @@
+# Credentials — NEVER commit these
+.env
+*.json.key
+service-account*.json
+firebase-adminsdk*.json
+civiccheck-f620c-firebase-adminsdk-fbsvc-10c4fec8f6.json
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (local dev only)
+uploads/
+
+# Build output
+dist/
+build/
