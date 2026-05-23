@@ -17,12 +17,18 @@ router.get("/locations", optionalAuth, async (req, res, next) => {
     const db = getDb();
     let ref = db.collection(process.env.LOCATIONS_COLLECTION || "map_locations");
 
-    // Filter by tag if provided
-    if (req.query.tag) {
-      ref = ref.where("tags", "array-contains", req.query.tag);
+    // Filter by tag if provided.
+    // NOTE: combining array-contains with orderBy requires a composite Firestore
+    // index. To avoid forcing a manual index-creation step we fetch without
+    // orderBy when a tag filter is active and sort the results in JS instead.
+    const tagFilter = req.query.tag;
+    if (tagFilter) {
+      ref = ref.where("tags", "array-contains", tagFilter);
     }
 
-    const snapshot = await ref.orderBy("createdAt", "desc").limit(200).get();
+    const snapshot = tagFilter
+      ? await ref.limit(200).get()
+      : await ref.orderBy("createdAt", "desc").limit(200).get();
 
     let locations = snapshot.docs.map((doc) => {
       const d = doc.data();
@@ -37,6 +43,15 @@ router.get("/locations", optionalAuth, async (req, res, next) => {
         createdAt: d.createdAt?.toDate().toISOString(),
       };
     });
+
+    // When a tag filter was applied we skipped orderBy, so sort here.
+    if (tagFilter) {
+      locations.sort((a, b) => {
+        if (!a.createdAt) return 1;
+        if (!b.createdAt) return -1;
+        return b.createdAt > a.createdAt ? 1 : -1;
+      });
+    }
 
     // Optional bounding-box filter (client-side after fetch)
     if (req.query.lat && req.query.lng && req.query.radiusKm) {
