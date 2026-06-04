@@ -190,16 +190,24 @@ service cloud.firestore {
 
 ## Storage Security Rules
 
-Firebase Console → Storage → Rules:
+Firebase Console → Storage → Rules (paste the contents of `storage.rules`):
 
 ```
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /vault/{userId}/{fileId} {
-      allow read: if true;
-      allow write: if request.auth.uid == userId
-                   && request.resource.size < 10 * 1024 * 1024;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size <= 10 * 1024 * 1024
+                   && request.resource.contentType.matches(
+                        'image/jpeg|image/png|application/pdf|video/mp4'
+                      );
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }

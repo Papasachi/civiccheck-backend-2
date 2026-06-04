@@ -2,8 +2,10 @@
 .env
 *.json.key
 service-account*.json
-firebase-adminsdk*.json
-civiccheck-f620c-firebase-adminsdk-fbsvc-10c4fec8f6.json
+*firebase-adminsdk*.json
+
+# Claude Code local settings (may contain URLs, emails, permission lists)
+.claude/settings.local.json
 
 # Node
 node_modules/
@@ -17,6 +19,9 @@ Thumbs.db
 
 # Uploads (local dev only)
 uploads/
+
+# Play Store submission files
+play-store-listing.md
 
 # Build output
 dist/

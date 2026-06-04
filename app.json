@@ -28,7 +28,7 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "privacyPolicyUrl": "https://victorofori.github.io/civiccheck/privacy-policy"
+      "privacyPolicyUrl": "https://papasachi.github.io/civiccheck-backend-2/privacy-policy.html"
     },
     "plugins": [],
     "scheme": "civiccheck"
