@@ -99,24 +99,31 @@ router.post("/upload", requireAuth, upload.single("file"), async (req, res, next
 router.get("/files", requireAuth, async (req, res, next) => {
   try {
     const db = getDb();
+    // orderBy("uploadedAt") omitted — the composite index may not be deployed.
+    // We sort the (≤50) results in memory instead.
     const snapshot = await db
       .collection(process.env.FILES_COLLECTION || "vault_files")
       .where("uploadedBy", "==", req.user.uid)
-      .orderBy("uploadedAt", "desc")
       .limit(50)
       .get();
 
-    const files = snapshot.docs.map((doc) => {
-      const d = doc.data();
-      return {
-        fileId: d.fileId,
-        name: d.name,
-        mimeType: d.mimeType,
-        sizeBytes: d.sizeBytes,
-        url: d.publicUrl,
-        uploadedAt: d.uploadedAt?.toDate().toISOString(),
-      };
-    });
+    const files = snapshot.docs
+      .map((doc) => {
+        const d = doc.data();
+        return {
+          fileId: d.fileId,
+          name: d.name,
+          mimeType: d.mimeType,
+          sizeBytes: d.sizeBytes,
+          url: d.publicUrl,
+          uploadedAt: d.uploadedAt?.toDate().toISOString() ?? null,
+        };
+      })
+      .sort((a, b) => {
+        if (!a.uploadedAt) return 1;
+        if (!b.uploadedAt) return -1;
+        return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
+      });
 
     return res.json(files);
   } catch (err) {
