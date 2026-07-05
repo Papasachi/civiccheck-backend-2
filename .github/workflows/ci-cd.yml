@@ -130,12 +130,18 @@ jobs:
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway up --service civiccheck-api --detach
+        run: |
+          # Strip stray whitespace/newlines from the token — a trailing newline in the
+          # secret makes the CLI's HTTP client fail with "failed to parse header value"
+          # ("Login state is corrupt") when it builds the Authorization header.
+          export RAILWAY_TOKEN="$(printf '%s' "$RAILWAY_TOKEN" | tr -d '[:space:]')"
+          railway up --service civiccheck-api --detach
 
       - name: Verify deployment health
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
+          export RAILWAY_TOKEN="$(printf '%s' "$RAILWAY_TOKEN" | tr -d '[:space:]')"
           echo "Waiting for deployment to settle..."
           sleep 15
           # Fetch the live URL from Railway and hit /health
