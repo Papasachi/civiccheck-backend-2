@@ -144,10 +144,13 @@ jobs:
           export RAILWAY_TOKEN="$(printf '%s' "$RAILWAY_TOKEN" | tr -d '[:space:]')"
           echo "Waiting for deployment to settle..."
           sleep 15
-          # Fetch the live URL from Railway and hit /health
-          LIVE_URL=$(railway domain --service civiccheck-backend-2 2>/dev/null || echo "")
+          # Fetch the live URL from Railway and hit /health.
+          # `railway domain` output isn't guaranteed to be a bare hostname, so extract
+          # just the hostname-looking token — otherwise a malformed $LIVE_URL makes curl
+          # exit 3 ("URL malformed"), which set -e turns into a step failure.
+          LIVE_URL=$(railway domain --service civiccheck-backend-2 2>/dev/null | grep -oE '[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' | head -1 || echo "")
           if [ -n "$LIVE_URL" ]; then
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$LIVE_URL/health")
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$LIVE_URL/health" || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "✅ Live health check passed (https://$LIVE_URL/health)"
             else
