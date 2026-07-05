@@ -135,7 +135,7 @@ jobs:
           # secret makes the CLI's HTTP client fail with "failed to parse header value"
           # ("Login state is corrupt") when it builds the Authorization header.
           export RAILWAY_TOKEN="$(printf '%s' "$RAILWAY_TOKEN" | tr -d '[:space:]')"
-          railway up --service civiccheck-api --detach
+          railway up --service civiccheck-backend-2 --detach
 
       - name: Verify deployment health
         env:
@@ -145,7 +145,7 @@ jobs:
           echo "Waiting for deployment to settle..."
           sleep 15
           # Fetch the live URL from Railway and hit /health
-          LIVE_URL=$(railway domain --service civiccheck-api 2>/dev/null || echo "")
+          LIVE_URL=$(railway domain --service civiccheck-backend-2 2>/dev/null || echo "")
           if [ -n "$LIVE_URL" ]; then
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$LIVE_URL/health")
             if [ "$STATUS" = "200" ]; then
