@@ -52,45 +52,70 @@ router.post(
       });
     }
 
+    const fileId = uuidv4();
+    const ext = filename.split(".").pop();
+    const storagePath = `vault/${req.user.uid}/${fileId}.${ext}`;
+
     try {
-      const db = getDb();
       const bucket = getBucket();
-
-      const fileId = uuidv4();
-      const ext = filename.split(".").pop();
-      const storagePath = `vault/${req.user.uid}/${fileId}.${ext}`;
-
-      // Upload to Firebase Storage
       const fileRef = bucket.file(storagePath);
-      await fileRef.save(buffer, {
-        metadata: {
-          contentType: mimeType,
-          metadata: {
-            uploadedBy: req.user.uid,
-            originalName: filename,
-          },
-        },
-      });
 
-      // Make the file publicly readable (remove if you want private signed URLs)
-      await fileRef.makePublic();
+      try {
+        await fileRef.save(buffer, {
+          metadata: {
+            contentType: mimeType,
+            metadata: {
+              uploadedBy: req.user.uid,
+              originalName: filename,
+            },
+          },
+        });
+      } catch (err) {
+        console.error(`[vault/upload] Storage save() failed for ${storagePath}:`, err.code || err.name, err.message);
+        throw err;
+      }
+
+      // Make the file publicly readable. Buckets with "uniform bucket-level
+      // access" enabled (the default for newly-provisioned GCS buckets) reject
+      // this legacy per-object ACL call — in that case the bucket/objects are
+      // expected to already be public via an IAM binding, so skip it instead
+      // of failing the whole upload.
+      try {
+        await fileRef.makePublic();
+      } catch (err) {
+        if (/uniform bucket-level access/i.test(err.message || "")) {
+          console.warn(
+            `[vault/upload] Skipped makePublic() for ${storagePath} — bucket has uniform bucket-level access enabled; assuming public read is granted via bucket IAM.`
+          );
+        } else {
+          console.error(`[vault/upload] makePublic() failed for ${storagePath}:`, err.code || err.name, err.message);
+          throw err;
+        }
+      }
+
       const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
 
       // Record metadata in Firestore
       const now = new Date();
-      await db
-        .collection(process.env.FILES_COLLECTION || "vault_files")
-        .doc(fileId)
-        .set({
-          fileId,
-          name: filename,
-          mimeType,
-          sizeBytes: buffer.length,
-          storagePath,
-          publicUrl,
-          uploadedBy: req.user.uid,
-          uploadedAt: now,
-        });
+      try {
+        const db = getDb();
+        await db
+          .collection(process.env.FILES_COLLECTION || "vault_files")
+          .doc(fileId)
+          .set({
+            fileId,
+            name: filename,
+            mimeType,
+            sizeBytes: buffer.length,
+            storagePath,
+            publicUrl,
+            uploadedBy: req.user.uid,
+            uploadedAt: now,
+          });
+      } catch (err) {
+        console.error(`[vault/upload] Firestore write failed for fileId ${fileId}:`, err.code || err.name, err.message);
+        throw err;
+      }
 
       return res.status(200).json({
         fileId,
