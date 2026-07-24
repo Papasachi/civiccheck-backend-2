@@ -56,7 +56,12 @@ app.use(
 );
 
 // ─── Body parsing ─────────────────────────────────────────────────────────────
-app.use(express.json({ limit: "1mb" }));
+// /vault/upload carries base64 file data and applies its own larger JSON limit
+// (see routes/vault.js); every other route stays capped at 1mb here.
+app.use((req, res, next) => {
+  if (req.method === "POST" && req.path === "/vault/upload") return next();
+  express.json({ limit: "1mb" })(req, res, next);
+});
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Logging ──────────────────────────────────────────────────────────────────

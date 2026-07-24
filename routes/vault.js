@@ -1,96 +1,109 @@
-const { Router } = require("express");
-const multer = require("multer");
+const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const { getDb, getBucket } = require("../config/firebase");
 const { requireAuth } = require("../middleware/auth");
 
-const router = Router();
+const router = express.Router();
 
-// ─── Multer: store in memory, validate type & size ───────────────────────────
+// ─── Upload limits ────────────────────────────────────────────────────────────
 const ALLOWED_TYPES = (process.env.ALLOWED_FILE_TYPES || "image/jpeg,image/png,application/pdf,video/mp4")
   .split(",")
   .map((t) => t.trim());
 
 const MAX_SIZE_BYTES = (parseInt(process.env.MAX_FILE_SIZE_MB || "10", 10)) * 1024 * 1024;
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_SIZE_BYTES },
-  fileFilter(req, file, cb) {
-    if (ALLOWED_TYPES.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(
-        Object.assign(new Error(`File type not allowed: ${file.mimetype}`), {
-          code: "INVALID_FILE_TYPE",
-        }),
-        false
-      );
-    }
-  },
-});
+// Base64 inflates payload size by ~4/3; add headroom for JSON framing.
+const JSON_BODY_LIMIT = `${Math.ceil((MAX_SIZE_BYTES * 4) / 3 / (1024 * 1024)) + 2}mb`;
 
 // ─── POST /vault/upload ───────────────────────────────────────────────────────
 /**
  * Upload a file to Firebase Storage and record metadata in Firestore.
- * Multipart form field name: "file"
+ * JSON body: { base64: string, mimeType: string, filename: string }
  */
-router.post("/upload", requireAuth, upload.single("file"), async (req, res, next) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file provided. Use multipart field name: file" });
-  }
+router.post(
+  "/upload",
+  requireAuth,
+  express.json({ limit: JSON_BODY_LIMIT }),
+  async (req, res, next) => {
+    const { base64, mimeType, filename } = req.body || {};
 
-  try {
-    const db = getDb();
-    const bucket = getBucket();
+    if (!base64 || !mimeType || !filename) {
+      return res.status(400).json({ error: "Missing required fields: base64, mimeType, filename" });
+    }
 
-    const fileId = uuidv4();
-    const ext = req.file.originalname.split(".").pop();
-    const storagePath = `vault/${req.user.uid}/${fileId}.${ext}`;
+    if (!ALLOWED_TYPES.includes(mimeType)) {
+      return res.status(415).json({ error: `File type not allowed: ${mimeType}` });
+    }
 
-    // Upload to Firebase Storage
-    const fileRef = bucket.file(storagePath);
-    await fileRef.save(req.file.buffer, {
-      metadata: {
-        contentType: req.file.mimetype,
+    let buffer;
+    try {
+      buffer = Buffer.from(base64, "base64");
+    } catch {
+      return res.status(400).json({ error: "Invalid base64 data" });
+    }
+
+    if (buffer.length === 0) {
+      return res.status(400).json({ error: "Empty file" });
+    }
+
+    if (buffer.length > MAX_SIZE_BYTES) {
+      return res.status(413).json({
+        error: `File too large. Max size: ${process.env.MAX_FILE_SIZE_MB || 10} MB`,
+      });
+    }
+
+    try {
+      const db = getDb();
+      const bucket = getBucket();
+
+      const fileId = uuidv4();
+      const ext = filename.split(".").pop();
+      const storagePath = `vault/${req.user.uid}/${fileId}.${ext}`;
+
+      // Upload to Firebase Storage
+      const fileRef = bucket.file(storagePath);
+      await fileRef.save(buffer, {
         metadata: {
-          uploadedBy: req.user.uid,
-          originalName: req.file.originalname,
+          contentType: mimeType,
+          metadata: {
+            uploadedBy: req.user.uid,
+            originalName: filename,
+          },
         },
-      },
-    });
-
-    // Make the file publicly readable (remove if you want private signed URLs)
-    await fileRef.makePublic();
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
-
-    // Record metadata in Firestore
-    const now = new Date();
-    await db
-      .collection(process.env.FILES_COLLECTION || "vault_files")
-      .doc(fileId)
-      .set({
-        fileId,
-        name: req.file.originalname,
-        mimeType: req.file.mimetype,
-        sizeBytes: req.file.size,
-        storagePath,
-        publicUrl,
-        uploadedBy: req.user.uid,
-        uploadedAt: now,
       });
 
-    return res.status(200).json({
-      fileId,
-      status: "uploaded",
-      name: req.file.originalname,
-      url: publicUrl,
-      uploadedAt: now.toISOString(),
-    });
-  } catch (err) {
-    next(err);
+      // Make the file publicly readable (remove if you want private signed URLs)
+      await fileRef.makePublic();
+      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+
+      // Record metadata in Firestore
+      const now = new Date();
+      await db
+        .collection(process.env.FILES_COLLECTION || "vault_files")
+        .doc(fileId)
+        .set({
+          fileId,
+          name: filename,
+          mimeType,
+          sizeBytes: buffer.length,
+          storagePath,
+          publicUrl,
+          uploadedBy: req.user.uid,
+          uploadedAt: now,
+        });
+
+      return res.status(200).json({
+        fileId,
+        status: "uploaded",
+        name: filename,
+        url: publicUrl,
+        uploadedAt: now.toISOString(),
+      });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // ─── GET /vault/files ─────────────────────────────────────────────────────────
 /**
@@ -164,19 +177,6 @@ router.delete("/files/:fileId", requireAuth, async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
-
-// ─── Multer error handler ─────────────────────────────────────────────────────
-router.use((err, req, res, next) => {
-  if (err.code === "LIMIT_FILE_SIZE") {
-    return res.status(413).json({
-      error: `File too large. Max size: ${process.env.MAX_FILE_SIZE_MB || 10} MB`,
-    });
-  }
-  if (err.code === "INVALID_FILE_TYPE") {
-    return res.status(415).json({ error: err.message });
-  }
-  next(err);
 });
 
 module.exports = router;
