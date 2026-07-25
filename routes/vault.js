@@ -119,8 +119,9 @@ router.post(
 
       return res.status(200).json({
         fileId,
-        status: "uploaded",
         name: filename,
+        mimeType,
+        sizeBytes: buffer.length,
         url: publicUrl,
         uploadedAt: now.toISOString(),
       });
