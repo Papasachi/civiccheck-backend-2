@@ -10,7 +10,7 @@ const ALLOWED_TYPES = (process.env.ALLOWED_FILE_TYPES || "image/jpeg,image/png,a
   .split(",")
   .map((t) => t.trim());
 
-const MAX_SIZE_BYTES = (parseInt(process.env.MAX_FILE_SIZE_MB || "10", 10)) * 1024 * 1024;
+const MAX_SIZE_BYTES = (parseInt(process.env.MAX_FILE_SIZE_MB || "50", 10)) * 1024 * 1024;
 
 // Base64 inflates payload size by ~4/3; add headroom for JSON framing.
 const JSON_BODY_LIMIT = `${Math.ceil((MAX_SIZE_BYTES * 4) / 3 / (1024 * 1024)) + 2}mb`;
@@ -48,7 +48,7 @@ router.post(
 
     if (buffer.length > MAX_SIZE_BYTES) {
       return res.status(413).json({
-        error: `File too large. Max size: ${process.env.MAX_FILE_SIZE_MB || 10} MB`,
+        error: `File too large. Max size: ${process.env.MAX_FILE_SIZE_MB || 50} MB`,
       });
     }
 
@@ -60,6 +60,17 @@ router.post(
       const bucket = getBucket();
       const fileRef = bucket.file(storagePath);
 
+      // Firebase-provisioned buckets (the *.firebasestorage.app default bucket
+      // included) have Public Access Prevention enabled, which silently blocks
+      // any bucket/object-level public ACL or IAM grant — so a plain
+      // storage.googleapis.com URL (and fileRef.makePublic(), which sets a
+      // legacy public ACL) 403s no matter what. A per-file download token
+      // routes the read through Firebase's own serving layer instead of GCS
+      // bucket ACLs, and — per Firebase's documented behavior — bypasses
+      // storage.rules, so it works even though storage.rules restricts reads
+      // to the owning user.
+      const downloadToken = uuidv4();
+
       try {
         await fileRef.save(buffer, {
           metadata: {
@@ -67,6 +78,7 @@ router.post(
             metadata: {
               uploadedBy: req.user.uid,
               originalName: filename,
+              firebaseStorageDownloadTokens: downloadToken,
             },
           },
         });
@@ -75,25 +87,9 @@ router.post(
         throw err;
       }
 
-      // Make the file publicly readable. Buckets with "uniform bucket-level
-      // access" enabled (the default for newly-provisioned GCS buckets) reject
-      // this legacy per-object ACL call — in that case the bucket/objects are
-      // expected to already be public via an IAM binding, so skip it instead
-      // of failing the whole upload.
-      try {
-        await fileRef.makePublic();
-      } catch (err) {
-        if (/uniform bucket-level access/i.test(err.message || "")) {
-          console.warn(
-            `[vault/upload] Skipped makePublic() for ${storagePath} — bucket has uniform bucket-level access enabled; assuming public read is granted via bucket IAM.`
-          );
-        } else {
-          console.error(`[vault/upload] makePublic() failed for ${storagePath}:`, err.code || err.name, err.message);
-          throw err;
-        }
-      }
-
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+      const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(
+        storagePath
+      )}?alt=media&token=${downloadToken}`;
 
       // Record metadata in Firestore
       const now = new Date();
