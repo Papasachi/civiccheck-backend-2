@@ -40,6 +40,7 @@ router.get("/locations", optionalAuth, async (req, res, next) => {
         longitude: d.longitude,
         tags: d.tags || [],
         status: d.status || "open",
+        createdBy: d.createdBy || null,
         createdAt: d.createdAt?.toDate().toISOString(),
       };
     });
