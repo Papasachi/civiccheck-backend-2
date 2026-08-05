@@ -81,11 +81,14 @@ router.get(
  * Submit a new civic report.
  */
 router.post("/report", requireAuth, async (req, res, next) => {
-  const { title, description, category, location } = req.body;
+  const { title, description, category, location, priority } = req.body;
 
   if (!title || !description) {
     return res.status(400).json({ error: "title and description are required" });
   }
+
+  const VALID_PRIORITIES = ["low", "medium", "high"];
+  const normalizedPriority = VALID_PRIORITIES.includes(priority) ? priority : "medium";
 
   try {
     const db = getDb();
@@ -96,6 +99,7 @@ router.post("/report", requireAuth, async (req, res, next) => {
       description,
       category: category || "general",
       location: location || null,
+      priority: normalizedPriority,
       submittedBy: req.user.uid,
       submittedByEmail: req.user.email || null,
       status: "pending",
